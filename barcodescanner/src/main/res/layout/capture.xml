@@ -24,7 +24,7 @@
   <com.google.zxing.client.android.ViewfinderView
       android:id="@+id/viewfinder_view"
       android:layout_width="fill_parent"
-      android:layout_height="fill_parent"/>
+      android:layout_height="fill_parent" />
 
   <LinearLayout android:id="@+id/result_view"
                 android:orientation="vertical"
@@ -196,7 +196,7 @@
   <TextView android:id="@+id/status_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
+            android:layout_gravity="top|center_horizontal"
             android:background="@color/transparent"
             android:text="@string/msg_default_status"
             android:textColor="@color/status_text"/>
@@ -216,5 +216,17 @@
           android:drawableLeft="@drawable/toggle_torch"
           android:drawableStart="@drawable/toggle_torch"
           android:visibility="invisible"/>
+
+  <Button
+      android:id="@+id/choose_from_gallery_button"
+      android:layout_width="360dp"
+      android:layout_height="wrap_content"
+      android:layout_gravity="bottom|center_horizontal"
+      android:text="@string/choose_from_gallery"
+      android:background="@color/gallery_button"
+      android:layout_marginBottom="40dp"
+      android:textAllCaps="false"
+      android:textSize="18sp"
+      android:visibility="visible" />
 
 </merge>

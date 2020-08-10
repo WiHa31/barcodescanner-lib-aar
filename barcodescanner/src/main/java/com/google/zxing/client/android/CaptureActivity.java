@@ -92,6 +92,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   private static final long DEFAULT_INTENT_RESULT_DURATION_MS = 1500L;
   private static final long BULK_MODE_SCAN_DELAY_MS = 1000L;
+  public static final int PICK_IMAGE = 1;
 
   private static final String[] ZXING_URLS = { "http://zxing.appspot.com/scan", "zxing://scan/" };
 
@@ -110,6 +111,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private TextView statusView;
   private Button flipButton;
   private Button torchButton;
+  private Button galleryButton; // me
   private View resultView;
   private Result lastResult;
   private boolean hasSurface;
@@ -193,6 +195,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     statusView = (TextView) findViewById(R.id.status_view);
     flipButton = (Button) findViewById(R.id.flip_button);
     torchButton = (Button) findViewById(R.id.torch_button);
+    galleryButton = (Button) findViewById(R.id.choose_from_gallery_button);
 
     handler = null;
     lastResult = null;
@@ -427,6 +430,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+    System.out.println(requestCode);
+    System.out.println(resultCode);
     if (resultCode == RESULT_OK && requestCode == HISTORY_REQUEST_CODE && historyManager != null) {
       int itemNumber = intent.getIntExtra(Intents.History.ITEM_NUMBER, -1);
       if (itemNumber >= 0) {
@@ -480,7 +485,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
    * @param scaleFactor amount by which thumbnail was scaled
    * @param barcode   A greyscale bitmap of the camera data which was decoded.
    */
-  public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
+  public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) { // me
     inactivityTimer.onActivity();
     lastResult = rawResult;
     ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(this, rawResult);
@@ -576,7 +581,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   }
 
   // Put up our own UI for how to handle the decoded contents.
-  private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) {
+  private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) { // me
 
     CharSequence displayContents = resultHandler.getDisplayContents();
 
@@ -859,7 +864,34 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         }
       }
     }
+
+    //Настраиваем для нее обработчик нажатий OnClickListener:
+    galleryButton.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View view) {
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        //Тип получаемых объектов - image:
+        photoPickerIntent.setType("image/*");
+        photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
+
+        //Запускаем переход с ожиданием обратного результата в виде информации об изображении:
+        startActivityForResult(Intent.createChooser(photoPickerIntent, "Выберите изображение"), PICK_IMAGE);
+      }
+    });
   }
+
+
+
+//  public static Bitmap getPicture(Uri selectedImage) {
+//    String[] filePathColumn = { MediaStore.Images.Media.DATA };
+//    Cursor cursor = getContext().getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+//    cursor.moveToFirst();
+//    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+//    String picturePath = cursor.getString(columnIndex);
+//    cursor.close();
+//    return BitmapFactory.decodeFile(picturePath);
+//  }
 
   public void drawViewfinder() {
     viewfinderView.drawViewfinder();
