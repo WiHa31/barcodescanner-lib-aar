@@ -931,18 +931,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     }
   }
 
-
-
-//  public static Bitmap getPicture(Uri selectedImage) {
-//    String[] filePathColumn = { MediaStore.Images.Media.DATA };
-//    Cursor cursor = getContext().getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-//    cursor.moveToFirst();
-//    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-//    String picturePath = cursor.getString(columnIndex);
-//    cursor.close();
-//    return BitmapFactory.decodeFile(picturePath);
-//  }
-
   public void drawViewfinder() {
     viewfinderView.drawViewfinder();
   }
