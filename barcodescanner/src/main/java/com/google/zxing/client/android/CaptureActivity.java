@@ -22,10 +22,19 @@ import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.hardware.Camera;
+import android.provider.MediaStore;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Button;
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.ChecksumException;
 import com.google.zxing.DecodeHintType;
+import com.google.zxing.FormatException;
+import com.google.zxing.LuminanceSource;
+import com.google.zxing.MultiFormatReader;
+import com.google.zxing.NotFoundException;
+import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.Reader;
 import com.google.zxing.Result;
 import com.google.zxing.ResultMetadataType;
 import com.google.zxing.ResultPoint;
@@ -39,6 +48,7 @@ import com.google.zxing.client.android.result.ResultButtonListener;
 import com.google.zxing.client.android.result.ResultHandler;
 import com.google.zxing.client.android.result.ResultHandlerFactory;
 import com.google.zxing.client.android.result.supplement.SupplementalInfoRetriever;
+import com.google.zxing.common.HybridBinarizer;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -69,6 +79,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Collection;
@@ -111,7 +122,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private TextView statusView;
   private Button flipButton;
   private Button torchButton;
-  private Button galleryButton; // me
+  private Button galleryButton;
   private View resultView;
   private Result lastResult;
   private boolean hasSurface;
@@ -430,14 +441,53 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-    System.out.println(requestCode);
-    System.out.println(resultCode);
+    if (resultCode == RESULT_OK && requestCode == PICK_IMAGE && intent != null) {
+      Uri pickedImage = intent.getData();
+      if (pickedImage != null) {
+        getGalleryImageResult(pickedImage);
+      }
+    }
     if (resultCode == RESULT_OK && requestCode == HISTORY_REQUEST_CODE && historyManager != null) {
       int itemNumber = intent.getIntExtra(Intents.History.ITEM_NUMBER, -1);
       if (itemNumber >= 0) {
         HistoryItem historyItem = historyManager.buildHistoryItem(itemNumber);
         decodeOrStoreSavedBitmap(null, historyItem.getResult());
       }
+    }
+  }
+
+  private void getGalleryImageResult(Uri pickedImage) {
+    try {
+      Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), pickedImage);
+
+      int[] intArray = new int[bitmap.getWidth() * bitmap.getHeight()];
+      bitmap.getPixels(intArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+      LuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), intArray);
+      BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(source));
+
+      Reader reader = new MultiFormatReader();
+      Result result = null;
+
+      try {
+        result = reader.decode(binaryBitmap);
+      } catch (NotFoundException e) {
+        e.printStackTrace();
+      } catch (ChecksumException e) {
+        e.printStackTrace();
+      } catch (FormatException e) {
+        e.printStackTrace();
+      }
+
+      if (result != null) {
+        Intent intent = new Intent(getIntent().getAction());
+        handler = new CaptureActivityHandler(this, decodeFormats, decodeHints, characterSet, cameraManager);
+        intent.putExtra(Intents.Scan.RESULT, result.toString());
+        sendReplyMessage(R.id.return_scan_result, intent, 0);
+      }
+
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
@@ -485,7 +535,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
    * @param scaleFactor amount by which thumbnail was scaled
    * @param barcode   A greyscale bitmap of the camera data which was decoded.
    */
-  public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) { // me
+  public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
     inactivityTimer.onActivity();
     lastResult = rawResult;
     ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(this, rawResult);
@@ -581,7 +631,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   }
 
   // Put up our own UI for how to handle the decoded contents.
-  private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) { // me
+  private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) {
 
     CharSequence displayContents = resultHandler.getDisplayContents();
 
@@ -865,20 +915,20 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       }
     }
 
-    //Настраиваем для нее обработчик нажатий OnClickListener:
-    galleryButton.setOnClickListener(new View.OnClickListener() {
+    if (getIntent().getBooleanExtra(Intents.Scan.SHOW_TAKE_FROM_GALLERY_BUTTON, false)) {
+      galleryButton.setVisibility(View.VISIBLE);
+      galleryButton.setOnClickListener(new View.OnClickListener() {
 
-      @Override
-      public void onClick(View view) {
-        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-        //Тип получаемых объектов - image:
-        photoPickerIntent.setType("image/*");
-        photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
+        @Override
+        public void onClick(View view) {
+          Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+          photoPickerIntent.setType("image/*");
+          photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
 
-        //Запускаем переход с ожиданием обратного результата в виде информации об изображении:
-        startActivityForResult(Intent.createChooser(photoPickerIntent, "Выберите изображение"), PICK_IMAGE);
-      }
-    });
+          startActivityForResult(Intent.createChooser(photoPickerIntent, "Выберите изображение"), PICK_IMAGE);
+        }
+      });
+    }
   }
 
 

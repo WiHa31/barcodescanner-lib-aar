@@ -220,13 +220,13 @@
   <Button
       android:id="@+id/choose_from_gallery_button"
       android:layout_width="360dp"
-      android:layout_height="wrap_content"
+      android:layout_height="60dp"
       android:layout_gravity="bottom|center_horizontal"
       android:text="@string/choose_from_gallery"
       android:background="@color/gallery_button"
       android:layout_marginBottom="40dp"
       android:textAllCaps="false"
       android:textSize="18sp"
-      android:visibility="visible" />
+      android:visibility="invisible" />
 
 </merge>

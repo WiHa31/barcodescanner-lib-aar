@@ -184,6 +184,12 @@ public final class Intents {
      */
     public static final String SHOW_TORCH_BUTTON = "SHOW_TORCH_BUTTON";
 
+      /**
+       * Set to true if we want to show the button for gallery picking
+       */
+
+      public static final String SHOW_TAKE_FROM_GALLERY_BUTTON = "SHOW_TAKE_FROM_GALLERY_BUTTON";
+
     /**
      * Set to true if we want to show the launch with the torch toggled on
      */
